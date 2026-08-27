@@ -5,9 +5,12 @@ import bcrypt from "bcrypt";
 import {createUserSchema,signinSchema,createRoomSchema} from "@repo/common/zod";
 import {prismaClient} from "@repo/db/data"
 import { auth } from "./middleware";
+import cors from "cors";
 
 const app = express();
+app.use(cors());
 const port = 3000;
+
 app.use(express.json());
 const saltRounds = 10;
 app.post("/signup", async (req,res) =>{
@@ -107,7 +110,7 @@ app.post("/room",auth, async (req,res)=>{
 
 app.get("/chats/:roomId", async (req,res)=>{
     const roomId = Number(req.params.roomId);
-    const msgs = await prismaClient.chat.findMany({
+    const messages = await prismaClient.chat.findMany({
         where : {
             roomId : roomId
         },
@@ -117,7 +120,7 @@ app.get("/chats/:roomId", async (req,res)=>{
         take : 50
     })
     res.json({
-        msgs
+        messages
     })
 })
 

@@ -14,13 +14,23 @@ type Shape = {
     radius : number
 }
 
-export async function initDraw(canvas : HTMLCanvasElement, roomId : string){
+export async function initDraw(canvas : HTMLCanvasElement, roomId : string, socket : WebSocket){
   
     const ctx = canvas.getContext("2d");
 
             let existingShapes : Shape[] = await getExistingShapes(roomId);
 
             if(!ctx) return;
+
+            socket.onmessage = (event)=>{
+                const message = JSON.parse(event.data);
+
+                if(message.type === "chat"){
+                    const parsedShape = JSON.parse(message.message)
+                    existingShapes.push(parsedShape)
+                     clearCanvas(existingShapes,canvas,ctx)
+                }
+            }
 
          
             clearCanvas(existingShapes,canvas,ctx)
@@ -33,19 +43,41 @@ export async function initDraw(canvas : HTMLCanvasElement, roomId : string){
                 startY = e.clientY
             })
 
-            canvas.addEventListener("mouseup",(e)=>{
-                clicked = false;
-                const width = e.clientX - startX;
-                const height = e.clientY - startY;
+           canvas.addEventListener("mouseup", (e) => {
+    console.log("MOUSE UP");
 
-                existingShapes.push({
-                    type : "rect",
-                    x : startX,
-                    y : startY,
-                    height,
-                    width
-                })
-            })
+    clicked = false;
+
+    const width = e.clientX - startX;
+    const height = e.clientY - startY;
+
+    const shape: Shape = {
+        type: "rect",
+        x: startX,
+        y: startY,
+        width,
+        height
+    };
+
+    existingShapes.push(shape);
+
+    console.log("Socket state:", socket.readyState);
+
+    if (socket.readyState !== WebSocket.OPEN) {
+        console.log("SOCKET IS NOT OPEN");
+        return;
+    }
+
+    const data = {
+        type: "chat",
+        message: JSON.stringify(shape),
+        roomId
+    };
+
+    console.log("SENDING:", data);
+
+    socket.send(JSON.stringify(data));
+});
 
             canvas.addEventListener("mousemove",(e)=>{
                 if(clicked) {
@@ -78,14 +110,32 @@ function clearCanvas(existingShapes : Shape[], canvas : HTMLCanvasElement,ctx : 
 
 }
 
-async function getExistingShapes(roomId : string){
-   const res = await  axios.get(`${HTTP_BACKEND}/chats/${roomId}`);
-   const messages = res.data.message;
+async function getExistingShapes(roomId: string): Promise<Shape[]> {
+    try {
+        const res = await axios.get(
+            `${HTTP_BACKEND}/chats/${roomId}`
+        );
 
-   const shapes = messages.map((x: {message : string})=>{
-    const msgData = JSON.parse(x.message)
-    return msgData
-   })
-   return shapes
+        console.log("FULL RESPONSE:", res);
+        console.log("RESPONSE DATA:", res.data);
 
+        const messages = res.data.msgs;
+
+        console.log("MESSAGES:", messages);
+
+        if (!Array.isArray(messages)) {
+            console.log("Messages is not an array:", messages);
+            return [];
+        }
+
+        const shapes = messages.map((x: { message: string }) => {
+            return JSON.parse(x.message);
+        });
+
+        return shapes;
+
+    } catch (error) {
+        console.error("Error fetching existing shapes:", error);
+        return [];
+    }
 }
