@@ -2,12 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import { Menu, X, ArrowRight, Check } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-
+import Link from "next/link"
+import { useRouter } from "next/navigation";
+import { HTTP_BACKEND } from "@/config";
+import axios from "axios"
 function App() {
-  const router = useRouter();
+  
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  const router = useRouter();
+
+const handleGetStarted = async () => {
+    try {
+        const token = localStorage.getItem("token");
+
+        const response = await axios.post(
+            `${HTTP_BACKEND}/room`,
+            {
+                slug: `room-${Date.now()}`
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        const roomId = response.data.roomId;
+
+        router.push(`/canvas/${roomId}`);
+
+    } catch (error) {
+        console.error("ROOM ERROR:", error);
+    }
+};
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -68,18 +97,24 @@ function App() {
           </ul>
 
           <div className="hidden md:flex items-center gap-4">
-            <button onClick = {
-              ()=>{
-                router.push("/signin")
-              }
-            } className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-              Sign in
-              </button>            <a
-              href="#cta"
-              className="px-5 py-2 rounded-lg bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors"
-            >
-              Get started
-            </a>
+            <Link
+    href="/signin"
+    className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+>
+    Sign in
+</Link>
+<Link
+    href="/signup"
+    className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+>
+    Sign up
+</Link>
+             <button
+    onClick={handleGetStarted}
+    className="px-5 py-2 rounded-lg bg-gray-900 text-white font-medium hover:bg-gray-800"
+>
+    Get started
+</button>
           </div>
 
           <button
@@ -106,9 +141,15 @@ function App() {
                 </li>
               ))}
               <li>
-                <a href="#cta" className="block text-center px-5 py-2.5 rounded-lg bg-gray-900 text-white font-medium">
-                  Get started
-                </a>
+               
+<button
+    onClick={handleGetStarted}
+    className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700"
+>
+    Get started free
+    <ArrowRight size={18} />
+</button>
+                
               </li>
             </ul>
           </div>
@@ -170,57 +211,7 @@ function App() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-24 px-5">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Simple pricing</h2>
-            <p className="mt-4 text-gray-600 text-lg">Start free. Upgrade when you need more.</p>
-          </div>
 
-          <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {pricing.map((plan) => (
-              <div
-                key={plan.name}
-                className={`rounded-2xl p-8 ${
-                  plan.featured
-                    ? 'border-2 border-blue-600 bg-blue-50/50 relative'
-                    : 'border border-gray-200'
-                }`}
-              >
-                {plan.featured && (
-                  <span className="absolute top-0 right-6 -translate-y-1/2 px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold">
-                    POPULAR
-                  </span>
-                )}
-                <h3 className="text-lg font-bold">{plan.name}</h3>
-                <p className="text-4xl font-bold mt-4">
-                  {plan.price}
-                  <span className="text-base font-normal text-gray-500">{plan.period}</span>
-                </p>
-                <ul className="mt-6 space-y-3 text-gray-600">
-                  {plan.features.map((feat) => (
-                    <li key={feat} className="flex items-center gap-2">
-                      <Check size={18} className="text-blue-600 shrink-0" />
-                      {feat}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href="#cta"
-                  className={`mt-8 block text-center py-3 rounded-xl font-semibold transition-colors ${
-                    plan.featured
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'border border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  Get started
-                </a>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA */}
       <section id="cta" className="py-24 px-5">

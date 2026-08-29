@@ -8,10 +8,14 @@ import { auth } from "./middleware";
 import cors from "cors";
 
 const app = express();
-app.use(cors());
+app.use(express.json());
+app.use(cors({
+    origin: "http://localhost:3001",
+    credentials: true
+}));
 const port = 3000;
 
-app.use(express.json());
+
 const saltRounds = 10;
 app.post("/signup", async (req,res) =>{
     const result = createUserSchema.safeParse(req.body);
