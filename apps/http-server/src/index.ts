@@ -10,10 +10,10 @@ import cors from "cors";
 const app = express();
 app.use(express.json());
 app.use(cors({
-    origin: "http://localhost:3001",
+    origin: process.env.FRONTEND_URL,
     credentials: true
 }));
-const port = 3000;
+const port = Number(process.env.PORT) || 3000;
 
 
 const saltRounds = 10;
